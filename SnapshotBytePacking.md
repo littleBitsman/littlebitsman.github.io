@@ -22,20 +22,6 @@ Total size = `18` bytes
 - Treat Z as a `u32` when performing bit manipulation; bitwise operations on the float directly will not behave correctly.
 - When reading the Z coordinate, masking the LSBs is optional — the introduced error is negligible (~1e-5).
 
-### Example CFrame:
-
-Random CFrame I got from `Workspace.CurrentCamera` lol
-
-Position: -86.98088, 447.52756, -216.12019
-Rotation: -13.207°, 58.252°, 0°
-
-Compressed quaternion:
-`i = 3, q0 = -3292, q1 = 15843, q2 = 1834`
-
-| X           | Y           | Z           | q0    | q1    | q2    |
-|-------------|-------------|-------------|-------|-------|-------|
-|`36 F6 AD C2`|`87 C3 DF 43`|`C0 1E 58 C3`|`24 F3`|`E3 3D`|`2A 07`|
-
 Errors that occur during (de)compression should be fatal. For example, if square root operations receive a negative number or return NaN, the process should be aborted.
 
 ### Compression
@@ -48,7 +34,7 @@ multiply each component by `sin(angle / 2) / magnitude`. Otherwise, set the X to
 6. Let `q0`, `q1`, and `q2` be the three remaining components that were not dropped (still in order - so if `qy` was dropped, `q0, q1, q2 = qx, qz, qw`). Multiply each of these by the sign of the dropped component (1 or -1, no 0) and then multiply again by 32767 to convert to an `i16`. Round each value to the nearest integer.
 7. Store the index in the two least-significant bits of the Z component in the CFrame's position. Store the `q0`, `q1`, and `q2` values as `i16`s following the position values.
 
-#### Decompression
+### Decompression
 1. Extract the index bits from the Z component in the CFrame's position.
 2. Retrieve the `q0`, `q1`, and `q2` values from the binary data following the position values. Divide each by 32767 to convert back to floats.
 3. Let `d = sqrt(1 - (q0*q0 + q1*q1 + q2*q2))`.
@@ -56,6 +42,19 @@ multiply each component by `sin(angle / 2) / magnitude`. Otherwise, set the X to
 
 Converting the quaternion back to the CFrame in Roblox is as simple as passing it to `CFrame.new`:
 `CFrame.new(x, y, z, qx, qy, qz, qw)` - see [docs](https://create.roblox.com/docs/reference/engine/datatypes/CFrame#new)
+
+#### Example CFrame
+Random CFrame I got from `Workspace.CurrentCamera` lol
+
+Position: -86.98088, 447.52756, -216.12019
+Rotation: -13.207°, 58.252°, 0°
+
+Compressed quaternion:
+`i = 3, q0 = -3292, q1 = 15843, q2 = 1834`
+
+| X           | Y           | Z           | q0    | q1    | q2    |
+|-------------|-------------|-------------|-------|-------|-------|
+|`36 F6 AD C2`|`87 C3 DF 43`|`C0 1E 58 C3`|`24 F3`|`E3 3D`|`2A 07`|
 
 ## Recording Schema
 All fields in this schema are offset from the start of the `Recording`.
